@@ -4,40 +4,34 @@
     "desarrollador": "Dentalmovilr4",
     "objetivo": "Auditoría de seguridad y monitoreo de ecosistema digital"
   },
-  "proyectos_activos": [
-    {
-      "nombre": "Aura Trade AI",
-      "descripcion": "Sistema de monitoreo de precios cripto con alertas en Telegram y WhatsApp.",
-      "tecnologias": ["Node.js", "APIs Cripto", "Telegram Bot API"]
-    },
-    {
-      "nombre": "DMR4 Coin",
-      "red": "Solana",
-      "proposito": "Token personal integrado en el dashboard SolTrack.",
-      "estado": "Desplegado"
-    },
-    {
-      "nombre": "Bio-Ganado-AI",
-      "descripcion": "Proyecto de biometría bovina para identificar razas (Gyr, Brahman) y calcular peso.",
-      "tecnologias": ["Python", "IA Visual", "Termux"]
-    },
-    {
-      "nombre": "Aura Saber 11",
-      "descripcion": "Simulador de exámenes ICFES con base de datos SQL.",
-      "plataforma": "Vercel / Web"
-    }
+  "repositorios_github_dentalmovil": [
+    { "nombre": "Aura-Saber-11" },
+    { "nombre": "Aura-NFT-Cesar-Genesis" },
+    { "nombre": "IA-Creator-Toolkit" },
+    { "nombre": "Sistemas-Data-R4" },
+    { "nombre": "dental-web" },
+    { "nombre": "dashboard-dentalmovil" },
+    { "nombre": "Aura-WhatsApp-Bot" },
+    { "nombre": "proyecto-cripto" },
+    { "nombre": "Mi-portafolio" },
+    { "nombre": "Crypto-Mind-AI" },
+    { "nombre": "CryptoCalc" },
+    { "nombre": "ganaderia-cesar-impacto" },
+    { "nombre": "Bio-repo-cultivos" },
+    { "nombre": "fresa-botanica-data" },
+    { "nombre": "finanzas-vibe" },
+    { "nombre": "Clima-vibe" },
+    { "nombre": "reproductor-de-musica-estetica" },
+    { "nombre": "physics-diagnostic-10-" },
+    { "nombre": "Pr-tesis-dentales-" }
   ],
   "seguridad_y_privacidad": {
     "prioridad": "Alta",
     "restricciones": [
-      "No exponer coordenadas de ubicación en el código",
-      "Proteger llaves de API en entornos seguros",
-      "Bloquear ejecución de archivos no autorizados"
+      "No exponer coordenadas de ubicación",
+      "Proteger llaves de API",
+      "Bloquear ejecución no autorizada"
     ]
-  },
-  "canales_oficiales": {
-    "whatsapp": "Dentalmovilr4 Channel",
-    "terminal_principal": "Termux / Acode"
   }
 }
 
