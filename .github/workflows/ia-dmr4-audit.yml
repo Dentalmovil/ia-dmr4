@@ -8,17 +8,23 @@ jobs:
   audit:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - name: Setup Node
+      - name: 📥 Clonando el repositorio
+        uses: actions/checkout@v3
+
+      - name: 🟢 Configurando Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '20'
-      - name: Install
-        run: npm install
-      - name: Run Audit
+
+      - name: 📦 Instalando Dependencias
+        run: |
+          npm install
+          npm install axios @google/generative-ai
+
+      - name: 🛡️ Ejecutando Cerebro IA DMR4
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: node index.js "Auditoria de seguridad DMR4"
+        run: node index.js "DMR4: Realiza auditoria de seguridad y reporta a Telegram"
 
