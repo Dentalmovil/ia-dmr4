@@ -1,0 +1,23 @@
+name: IA DMR4 Auditoria Automatica
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch: # Esto permite ejecutarlo manualmente con un botón
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Instalando Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+      - name: Instalar dependencias
+        run: npm install
+      - name: Ejecutar Cerebro IA DMR4
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: node index.js "DMR4: Realiza una auditoria de seguridad completa y reporta a Telegram"
