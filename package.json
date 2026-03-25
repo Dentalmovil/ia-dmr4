@@ -4,9 +4,13 @@
   "description": "Herramienta oficial de IA para los proyectos de Dentalmovilr4",
   "main": "index.js",
   "dependencies": {
-    "@google/generative-ai": "^0.1.0"
+    "@google/generative-ai": "^0.1.0",
+    "axios": "^1.6.0"
   },
   "scripts": {
     "start": "node index.js"
+  },
+  "engines": {
+    "node": ">=20.0.0"
   }
 }
