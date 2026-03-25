@@ -1,19 +1,43 @@
 {
-  "proyectos": [
+  "identidad": {
+    "nombre": "IA DMR4",
+    "desarrollador": "Dentalmovilr4",
+    "objetivo": "Auditoría de seguridad y monitoreo de ecosistema digital"
+  },
+  "proyectos_activos": [
     {
       "nombre": "Aura Trade AI",
-      "funcion": "Monitoreo de criptos y alertas en Telegram",
-      "estado": "Operativo"
+      "descripcion": "Sistema de monitoreo de precios cripto con alertas en Telegram y WhatsApp.",
+      "tecnologias": ["Node.js", "APIs Cripto", "Telegram Bot API"]
     },
     {
-      "nombre": "Aura WhatsApp Bot",
-      "funcion": "Bot de mensajería con soporte para audios y seguridad",
-      "numero": "+573114275056"
+      "nombre": "DMR4 Coin",
+      "red": "Solana",
+      "proposito": "Token personal integrado en el dashboard SolTrack.",
+      "estado": "Desplegado"
+    },
+    {
+      "nombre": "Bio-Ganado-AI",
+      "descripcion": "Proyecto de biometría bovina para identificar razas (Gyr, Brahman) y calcular peso.",
+      "tecnologias": ["Python", "IA Visual", "Termux"]
+    },
+    {
+      "nombre": "Aura Saber 11",
+      "descripcion": "Simulador de exámenes ICFES con base de datos SQL.",
+      "plataforma": "Vercel / Web"
     }
   ],
-  "reglas_seguridad": [
-    "No permitir archivos .exe",
-    "Verificar siempre el tamaño de los audios",
-    "Reportar errores críticos a Telegram de inmediato"
-  ]
+  "seguridad_y_privacidad": {
+    "prioridad": "Alta",
+    "restricciones": [
+      "No exponer coordenadas de ubicación en el código",
+      "Proteger llaves de API en entornos seguros",
+      "Bloquear ejecución de archivos no autorizados"
+    ]
+  },
+  "canales_oficiales": {
+    "whatsapp": "Dentalmovilr4 Channel",
+    "terminal_principal": "Termux / Acode"
+  }
 }
+
