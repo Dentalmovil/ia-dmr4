@@ -1,0 +1,19 @@
+{
+  "proyectos": [
+    {
+      "nombre": "Aura Trade AI",
+      "funcion": "Monitoreo de criptos y alertas en Telegram",
+      "estado": "Operativo"
+    },
+    {
+      "nombre": "Aura WhatsApp Bot",
+      "funcion": "Bot de mensajería con soporte para audios y seguridad",
+      "numero": "+573114275056"
+    }
+  ],
+  "reglas_seguridad": [
+    "No permitir archivos .exe",
+    "Verificar siempre el tamaño de los audios",
+    "Reportar errores críticos a Telegram de inmediato"
+  ]
+}
