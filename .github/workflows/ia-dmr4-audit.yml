@@ -26,5 +26,5 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: node index.js "DMR4: Auditoria con base de datos"
+        run: 'node index.js "DMR4: Auditoria con base de datos"'
 
