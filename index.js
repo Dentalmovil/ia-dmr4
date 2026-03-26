@@ -15,40 +15,41 @@ async function ejecutarAuditoria() {
         }
     }
 
-    console.log("🚀 Iniciando Auditoría Directa DMR4 (v1beta)...");
+    console.log("🚀 Iniciando Auditoría con Gemini 1.0 Pro...");
 
     try {
-        // 2. LA RUTA MAESTRA (v1beta)
-        // Esta ruta es la que acepta gemini-1.5-flash en la mayoría de proyectos nuevos
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+        // 2. USAMOS EL MODELO PRO (El viejo confiable)
+        // Se cambió gemini-1.5-flash por gemini-1.0-pro
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent?key=${apiKey}`;
         
         const payload = {
             contents: [{
-                parts: [{ text: `Actúa como IA DMR4 de Dentalmovilr4. Analiza estos datos y detecta riesgos: ${dataContext}. Responde de forma técnica y breve.` }]
+                parts: [{ text: `Actúa como IA DMR4. Analiza estos datos de Dentalmovilr4 y detecta riesgos: ${dataContext}. Responde breve.` }]
             }]
         };
 
         const response = await axios.post(url, payload);
+        
+        // La estructura de respuesta del Pro es un poco diferente, la extraemos con cuidado:
         const report = response.data.candidates[0].content.parts[0].text;
 
         // 3. ENVIAR REPORTE A TELEGRAM
         await axios.post(`https://api.telegram.org/bot${telegramToken}/sendMessage`, {
             chat_id: chatId,
-            text: `🛡️ **DMR4 ONLINE: REPORTE DE AUDITORÍA** 🛡️\n\n${report}`,
+            text: `🛡️ **DMR4 ONLINE: REPORTE GENERADO** 🛡️\n\n${report}`,
             parse_mode: "Markdown"
         });
 
-        console.log("✅ ¡POR FIN! Reporte enviado.");
+        console.log("✅ ¡POR FIN! Victoria. Reporte enviado.");
 
     } catch (error) {
-        console.error("❌ Error detectado:");
+        console.error("❌ Fallo:");
         const errorMsg = error.response?.data?.error?.message || error.message;
         console.log(errorMsg);
 
         await axios.post(`https://api.telegram.org/bot${telegramToken}/sendMessage`, {
             chat_id: chatId,
-            text: `⚠️ **DMR4 CRITICAL FAIL**\nMotivo: ${errorMsg}`,
-            parse_mode: "Markdown"
+            text: `⚠️ **DMR4 FALLO TÉCNICO**\nMotivo: ${errorMsg}`
         }).catch(() => {});
         
         process.exit(1);
@@ -56,4 +57,5 @@ async function ejecutarAuditoria() {
 }
 
 ejecutarAuditoria();
+
 
