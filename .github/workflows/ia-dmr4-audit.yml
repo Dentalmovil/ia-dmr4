@@ -1,11 +1,8 @@
 name: Auditoria IA DMR4
+
 on:
   schedule:
-    # Esto corre todos los días a las 13:00 UTC (8:00 AM hora Colombia)
-    - cron: '0 13 * * *'
-  workflow_dispatch:
-    # Esto te permite seguir dándole al botón manual si quieres
-
+    - cron: '0 13 * * *' # 8 AM Colombia
   push:
     branches: [ main ]
   workflow_dispatch:
@@ -13,6 +10,10 @@ on:
 jobs:
   audit:
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -20,17 +21,26 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '24'
+          node-version: '20'
 
       - name: Install dependencies
         run: |
           npm install
-          npm install axios @google/generative-ai
+          npm install @google/generative-ai axios
 
       - name: Run Audit Script
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: 'node index.js "DMR4: Auditoria con base de datos"'
+        run: node index.js
 
+      - name: Guardar Memoria de Auditoria
+        run: |
+          git config --global user.name 'Dentalmovilr4-AI'
+          git config --global user.email 'ai@dentalmovilr4.com'
+          
+          git add historial_dmr4.json || echo "No hay historial nuevo"
+          git commit -m "DMR4: Actualizando memoria [skip ci]" || echo "Sin cambios"
+          
+          git push origin main
