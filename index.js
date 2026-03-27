@@ -8,60 +8,57 @@ async function ejecutarAuditoria() {
 
     let dataContext = "Sin datos previos de proyectos.";
     if (fs.existsSync("./data.json")) {
-        try { 
-            dataContext = fs.readFileSync("./data.json", "utf8"); 
-        } catch (e) {
-            console.log("Error leyendo data.json");
-        }
+        try { dataContext = fs.readFileSync("./data.json", "utf8"); } catch (e) {}
     }
 
-    // LISTA DE MODELOS ACTUALIZADA SEGÚN TU CAPTURA
-    const modelosDMR4 = ["gemini-3-flash", "gemini-3-pro", "gemini-1.5-flash"];
-    let reporteGenerado = null;
-    let modeloExitoso = "";
+    console.log("🚀 Buscando modelos disponibles en tu cuenta...");
 
-    console.log("🚀 Iniciando Auditoría con Generación 3...");
+    try {
+        // 1. LE PREGUNTAMOS A GOOGLE QUÉ MODELOS TIENES
+        const listUrl = `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`;
+        const listRes = await axios.get(listUrl);
+        
+        // Filtramos para buscar Gemini 3 o 1.5 que soporten generar contenido
+        const modelosDisponibles = listRes.data.models
+            .filter(m => m.supportedGenerationMethods.includes("generateContent"))
+            .map(m => m.name);
 
-    // AQUÍ ESTÁ LA CORRECCIÓN: usamos 'of' en lugar de 'de'
-    for (const modelo of modelosDMR4) {
-        try {
-            console.log(`Probando modelo: ${modelo}...`);
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelo}:generateContent?key=${apiKey}`;
-            
-            const payload = {
-                contents: [{
-                    parts: [{ text: `Actúa como IA DMR4 de Dentalmovilr4. Analiza estos datos y detecta riesgos: ${dataContext}. Sé breve y técnico.` }]
-                }]
-            };
+        console.log("Modelos encontrados:", modelosDisponibles);
 
-            const response = await axios.post(url, payload);
-            
-            if (response.data && response.data.candidates) {
-                reporteGenerado = response.data.candidates[0].content.parts[0].text;
-                modeloExitoso = modelo;
-                console.log(`✅ ¡Dominada con ${modelo}!`);
-                break; 
-            }
-        } catch (error) {
-            const msg = error.response ? error.response.data.error.message : error.message;
-            console.log(`❌ ${modelo} falló: ${msg}`);
-        }
-    }
+        if (modelosDisponibles.length === 0) throw new Error("No tienes modelos activos.");
 
-    if (reporteGenerado) {
-        // ENVIAR REPORTE EXITOSO
+        // Elegimos el mejor disponible (preferiblemente Gemini 3 o 1.5)
+        const mejorModelo = modelosDisponibles.find(m => m.includes("gemini-3")) || modelosDisponibles[0];
+        
+        console.log(`🎯 Usando el mejor modelo encontrado: ${mejorModelo}`);
+
+        // 2. LANZAMOS LA AUDITORÍA
+        const url = `https://generativelanguage.googleapis.com/v1beta/${mejorModelo}:generateContent?key=${apiKey}`;
+        const payload = {
+            contents: [{ parts: [{ text: `Actúa como IA DMR4. Analiza estos datos de Dentalmovilr4 y detecta riesgos: ${dataContext}. Sé breve.` }] }]
+        };
+
+        const response = await axios.post(url, payload);
+        const report = response.data.candidates[0].content.parts[0].text;
+
+        // 3. ENVIAR A TELEGRAM
         await axios.post(`https://api.telegram.org/bot${telegramToken}/sendMessage`, {
             chat_id: chatId,
-            text: `🛡️ **DMR4 ONLINE: REPORTE G3** 🛡️\n\n**Modelo:** ${modeloExitoso}\n\n${reporteGenerado}`,
+            text: `🛡️ **DMR4 ONLINE: REPORTE FINAL** 🛡️\n\n**IA:** ${mejorModelo.split('/').pop()}\n\n${report}`,
             parse_mode: "Markdown"
         });
-        console.log("🚀 Reporte enviado a Telegram con éxito.");
-    } else {
-        // AVISO DE FALLO TOTAL
+
+        console.log("✅ ¡AUDITORÍA COMPLETADA!");
+
+    } catch (error) {
+        const errorMsg = error.response?.data?.error?.message || error.message;
+        console.log("Fallo crítico:", errorMsg);
+
         await axios.post(`https://api.telegram.org/bot${telegramToken}/sendMessage`, {
             chat_id: chatId,
-            text: `⚠️ **DMR4 CRITICAL FAIL**\nNingún modelo de la serie Gemini 3 o 1.5 respondió. Revisa la consola de GitHub.`
-        });
+            text: `⚠️ **DMR4: ERROR DE CONEXIÓN**\nDetalle: ${errorMsg}`
+        }).catch(() => {});
+        
         process.exit(1);
     }
 }
