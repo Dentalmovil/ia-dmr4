@@ -8,48 +8,49 @@ async function ejecutarAuditoria() {
 
     let dataContext = "Sin datos previos de proyectos.";
     if (fs.existsSync("./data.json")) {
+        try { dataContext = fs.readFileSync("./data.json", "utf8"); } catch (e) {}
+    }
+
+    // Lista de modelos según tu captura del "Patio de juegos"
+    const modelosDMR4 = ["gemini-3-flash", "gemini-3-pro"];
+    let reporteGenerado = null;
+
+    console.log("🚀 Iniciando Auditoría con Generación 3...");
+
+    for (const modelo de modelosDMR4) {
         try {
-            dataContext = fs.readFileSync("./data.json", "utf8");
-        } catch (e) {
-            console.log("No se pudo leer data.json");
+            console.log(`Trying with: ${modelo}...`);
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelo}:generateContent?key=${apiKey}`;
+            
+            const payload = {
+                contents: [{
+                    parts: [{ text: `Actúa como IA DMR4. Analiza estos datos de Dentalmovilr4 y detecta riesgos: ${dataContext}. Sé breve.` }]
+                }]
+            };
+
+            const response = await axios.post(url, payload);
+            reporteGenerado = response.data.candidates[0].content.parts[0].text;
+            
+            if (reporteGenerado) {
+                console.log(`✅ ¡Dominada con ${modelo}!`);
+                break; 
+            }
+        } catch (error) {
+            console.log(`❌ ${modelo} no respondió.`);
         }
     }
 
-    console.log("🚀 Probando con Gemini 1.5 Pro (El modelo más potente)...");
-
-    try {
-        // 2. CAMBIAMOS AL MODELO 1.5 PRO
-        // Este modelo es el que aparece en tu captura de AI Studio como "Nuestras mejores opciones"
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${apiKey}`;
-        
-        const payload = {
-            contents: [{
-                parts: [{ text: `Actúa como IA DMR4. Analiza estos datos de Dentalmovilr4 y detecta riesgos: ${dataContext}. Sé breve.` }]
-            }]
-        };
-
-        const response = await axios.post(url, payload);
-        const report = response.data.candidates[0].content.parts[0].text;
-
-        // 3. ENVIAR REPORTE A TELEGRAM
+    if (reporteGenerado) {
         await axios.post(`https://api.telegram.org/bot${telegramToken}/sendMessage`, {
             chat_id: chatId,
-            text: `🛡️ **DMR4 ONLINE: AUDITORÍA 1.5 PRO** 🛡️\n\n${report}`,
+            text: `🛡️ **DMR4 ONLINE: AUDITORÍA G3** 🛡️\n\n${reporteGenerado}`,
             parse_mode: "Markdown"
         });
-
-        console.log("✅ ¡POR FIN! Reporte enviado con 1.5 Pro.");
-
-    } catch (error) {
-        console.error("❌ Falló de nuevo:");
-        const errorMsg = error.response?.data?.error?.message || error.message;
-        console.log(errorMsg);
-
+    } else {
         await axios.post(`https://api.telegram.org/bot${telegramToken}/sendMessage`, {
             chat_id: chatId,
-            text: `⚠️ **DMR4 SIGUE OFFLINE**\nMotivo: ${errorMsg}\n\n_Probando alternativa..._`
-        }).catch(() => {});
-        
+            text: `⚠️ **DMR4: FALLO TOTAL DE MODELOS G3**\nRevisa si la API Key tiene permisos para Gemini 3 en el panel.`
+        });
         process.exit(1);
     }
 }
