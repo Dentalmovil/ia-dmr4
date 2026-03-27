@@ -6,57 +6,66 @@ async function ejecutarAuditoria() {
     const telegramToken = process.env.TELEGRAM_TOKEN;
     const chatId = process.env.TELEGRAM_CHAT_ID;
 
-    let dataContext = "Sin datos previos de proyectos.";
+    // 1. Cargar datos de proyectos y memoria anterior
+    let dataContext = "Sin datos actuales de proyectos.";
+    let historialPasado = "No hay registros de auditorías anteriores.";
+    
     if (fs.existsSync("./data.json")) {
-        try { dataContext = fs.readFileSync("./data.json", "utf8"); } catch (e) {}
+        dataContext = fs.readFileSync("./data.json", "utf8");
+    }
+    
+    if (fs.existsSync("./historial_dmr4.json")) {
+        historialPasado = fs.readFileSync("./historial_dmr4.json", "utf8");
     }
 
-    console.log("🚀 Buscando modelos disponibles en tu cuenta...");
+    console.log("🚀 Iniciando Auditoría con Memoria...");
 
     try {
-        // 1. LE PREGUNTAMOS A GOOGLE QUÉ MODELOS TIENES
+        // 2. Obtener el mejor modelo disponible automáticamente
         const listUrl = `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`;
         const listRes = await axios.get(listUrl);
-        
-        // Filtramos para buscar Gemini 3 o 1.5 que soporten generar contenido
-        const modelosDisponibles = listRes.data.models
+        const modelos = listRes.data.models
             .filter(m => m.supportedGenerationMethods.includes("generateContent"))
             .map(m => m.name);
-
-        console.log("Modelos encontrados:", modelosDisponibles);
-
-        if (modelosDisponibles.length === 0) throw new Error("No tienes modelos activos.");
-
-        // Elegimos el mejor disponible (preferiblemente Gemini 3 o 1.5)
-        const mejorModelo = modelosDisponibles.find(m => m.includes("gemini-3")) || modelosDisponibles[0];
         
-        console.log(`🎯 Usando el mejor modelo encontrado: ${mejorModelo}`);
+        const mejorModelo = modelos.find(m => m.includes("gemini-3")) || modelos[0];
 
-        // 2. LANZAMOS LA AUDITORÍA
+        // 3. Crear el mensaje para la IA incluyendo la memoria
+        const prompt = `Actúa como IA DMR4 de Dentalmovilr4. 
+        DATOS ACTUALES DE PROYECTOS: ${dataContext}
+        REPORTE DE LA AUDITORÍA ANTERIOR: ${historialPasado}
+        
+        TAREA: Analiza los riesgos actuales. Compara con el reporte anterior: 
+        - ¿Hay riesgos nuevos? 
+        - ¿Se solucionó algo de lo anterior? 
+        - Da un veredicto rápido. Sé técnico y breve.`;
+
         const url = `https://generativelanguage.googleapis.com/v1beta/${mejorModelo}:generateContent?key=${apiKey}`;
-        const payload = {
-            contents: [{ parts: [{ text: `Actúa como IA DMR4. Analiza estos datos de Dentalmovilr4 y detecta riesgos: ${dataContext}. Sé breve.` }] }]
-        };
+        const response = await axios.post(url, {
+            contents: [{ parts: [{ text: prompt }] }]
+        });
 
-        const response = await axios.post(url, payload);
-        const report = response.data.candidates[0].content.parts[0].text;
+        const nuevoReporte = response.data.candidates[0].content.parts[0].text;
 
-        // 3. ENVIAR A TELEGRAM
+        // 4. Guardar el nuevo reporte en la memoria local (el YAML se encarga de subirlo a GitHub)
+        fs.writeFileSync("./historial_dmr4.json", nuevoReporte);
+
+        // 5. Enviar reporte a Telegram
         await axios.post(`https://api.telegram.org/bot${telegramToken}/sendMessage`, {
             chat_id: chatId,
-            text: `🛡️ **DMR4 ONLINE: REPORTE FINAL** 🛡️\n\n**IA:** ${mejorModelo.split('/').pop()}\n\n${report}`,
+            text: `🛡️ **DMR4: AUDITORÍA CON MEMORIA** 🛡️\n\n**Modelo:** ${mejorModelo.split('/').pop()}\n\n${nuevoReporte}`,
             parse_mode: "Markdown"
         });
 
-        console.log("✅ ¡AUDITORÍA COMPLETADA!");
+        console.log("✅ Proceso completado con éxito.");
 
     } catch (error) {
         const errorMsg = error.response?.data?.error?.message || error.message;
-        console.log("Fallo crítico:", errorMsg);
-
+        console.error("Error:", errorMsg);
+        
         await axios.post(`https://api.telegram.org/bot${telegramToken}/sendMessage`, {
             chat_id: chatId,
-            text: `⚠️ **DMR4: ERROR DE CONEXIÓN**\nDetalle: ${errorMsg}`
+            text: `⚠️ **DMR4 FALLO DE MEMORIA**\nError: ${errorMsg}`
         }).catch(() => {});
         
         process.exit(1);
