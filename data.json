@@ -2,28 +2,29 @@
   "identidad": {
     "nombre": "IA DMR4",
     "desarrollador": "Dentalmovilr4",
-    "objetivo": "Auditoría de seguridad y monitoreo de ecosistema digital"
+    "objetivo": "Auditoría de seguridad y monitoreo de ecosistema digital",
+    "version": "1.2.0"
   },
   "repositorios_github_dentalmovil": [
-    { "nombre": "Aura-Saber-11" },
-    { "nombre": "Aura-NFT-Cesar-Genesis" },
-    { "nombre": "IA-Creator-Toolkit" },
-    { "nombre": "Sistemas-Data-R4" },
-    { "nombre": "dental-web" },
-    { "nombre": "dashboard-dentalmovil" },
-    { "nombre": "Aura-WhatsApp-Bot" },
-    { "nombre": "proyecto-cripto" },
-    { "nombre": "Mi-portafolio" },
-    { "nombre": "Crypto-Mind-AI" },
-    { "nombre": "CryptoCalc" },
-    { "nombre": "ganaderia-cesar-impacto" },
-    { "nombre": "Bio-repo-cultivos" },
-    { "nombre": "fresa-botanica-data" },
-    { "nombre": "finanzas-vibe" },
-    { "nombre": "Clima-vibe" },
-    { "nombre": "reproductor-de-musica-estetica" },
-    { "nombre": "physics-diagnostic-10-" },
-    { "nombre": "Pr-tesis-dentales-" }
+    { "nombre": "Aura-Saber-11", "riesgo": "medio", "ultimo_analisis": null },
+    { "nombre": "Aura-NFT-Cesar-Genesis", "riesgo": "medio", "ultimo_analisis": null },
+    { "nombre": "IA-Creator-Toolkit", "riesgo": "medio", "ultimo_analisis": null },
+    { "nombre": "Sistemas-Data-R4", "riesgo": "alto", "ultimo_analisis": null },
+    { "nombre": "dental-web", "riesgo": "medio", "ultimo_analisis": null },
+    { "nombre": "dashboard-dentalmovil", "riesgo": "medio", "ultimo_analisis": null },
+    { "nombre": "Aura-WhatsApp-Bot", "riesgo": "alto", "ultimo_analisis": null },
+    { "nombre": "proyecto-cripto", "riesgo": "critico", "ultimo_analisis": null },
+    { "nombre": "Mi-portafolio", "riesgo": "bajo", "ultimo_analisis": null },
+    { "nombre": "Crypto-Mind-AI", "riesgo": "alto", "ultimo_analisis": null },
+    { "nombre": "CryptoCalc", "riesgo": "alto", "ultimo_analisis": null },
+    { "nombre": "ganaderia-cesar-impacto", "riesgo": "medio", "ultimo_analisis": null },
+    { "nombre": "Bio-repo-cultivos", "riesgo": "medio", "ultimo_analisis": null },
+    { "nombre": "fresa-botanica-data", "riesgo": "medio", "ultimo_analisis": null },
+    { "nombre": "finanzas-vibe", "riesgo": "alto", "ultimo_analisis": null },
+    { "nombre": "Clima-vibe", "riesgo": "bajo", "ultimo_analisis": null },
+    { "nombre": "reproductor-de-musica-estetica", "riesgo": "bajo", "ultimo_analisis": null },
+    { "nombre": "physics-diagnostic-10-", "riesgo": "medio", "ultimo_analisis": null },
+    { "nombre": "Pr-tesis-dentales-", "riesgo": "medio", "ultimo_analisis": null }
   ],
   "seguridad_y_privacidad": {
     "prioridad": "Alta",
@@ -34,4 +35,3 @@
     ]
   }
 }
-
