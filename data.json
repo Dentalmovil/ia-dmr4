@@ -2,36 +2,30 @@
   "identidad": {
     "nombre": "IA DMR4",
     "desarrollador": "Dentalmovilr4",
-    "objetivo": "Auditoría de seguridad y monitoreo de ecosistema digital"
+    "version": "1.0.0",
+    "entorno": "produccion"
   },
-  "repositorios_github_dentalmovil": [
-    { "nombre": "Aura-Saber-11" },
-    { "nombre": "Aura-NFT-Cesar-Genesis" },
-    { "nombre": "IA-Creator-Toolkit" },
-    { "nombre": "Sistemas-Data-R4" },
-    { "nombre": "dental-web" },
-    { "nombre": "dashboard-dentalmovil" },
-    { "nombre": "Aura-WhatsApp-Bot" },
-    { "nombre": "proyecto-cripto" },
-    { "nombre": "Mi-portafolio" },
-    { "nombre": "Crypto-Mind-AI" },
-    { "nombre": "CryptoCalc" },
-    { "nombre": "ganaderia-cesar-impacto" },
-    { "nombre": "Bio-repo-cultivos" },
-    { "nombre": "fresa-botanica-data" },
-    { "nombre": "finanzas-vibe" },
-    { "nombre": "Clima-vibe" },
-    { "nombre": "reproductor-de-musica-estetica" },
-    { "nombre": "physics-diagnostic-10-" },
-    { "nombre": "Pr-tesis-dentales-" }
+  "repositorios": [
+    {
+      "nombre": "Aura-Saber-11",
+      "riesgo": "medio",
+      "tipo": "IA",
+      "ultimo_analisis": null
+    }
   ],
-  "seguridad_y_privacidad": {
-    "prioridad": "Alta",
-    "restricciones": [
-      "No exponer coordenadas de ubicación",
-      "Proteger llaves de API",
-      "Bloquear ejecución no autorizada"
+  "seguridad": {
+    "nivel": "alto",
+    "escaneos_automaticos": true,
+    "alertas_activas": true
+  },
+  "reglas": {
+    "bloqueos": [
+      "exec_remota",
+      "acceso_no_autorizado"
+    ],
+    "proteccion": [
+      "ocultar_tokens",
+      "encriptar_datos_sensibles"
     ]
   }
 }
-
