@@ -1,76 +1,175 @@
 const axios = require("axios");
 const fs = require("fs");
 
+// ==========================
+// 🔐 CONFIGURACIÓN SEGURA
+// ==========================
+const apiKey = process.env.GEMINI_API_KEY;
+const telegramToken = process.env.TELEGRAM_TOKEN;
+const chatId = process.env.TELEGRAM_CHAT_ID;
+
+// ==========================
+// 🧼 SANITIZADOR DE DATOS
+// ==========================
+function sanitizar(data) {
+    if (!data) return "";
+    return data
+        .replace(/(api_key|token|secret)[^,\n]*/gi, "[REDACTED]")
+        .replace(/https?:\/\/[^\s]+/g, "[URL]");
+}
+
+// ==========================
+// 🔍 DETECTOR LOCAL DE RIESGOS
+// ==========================
+function detectarRiesgosLocales(data) {
+    const riesgos = [];
+
+    if (!data) return riesgos;
+
+    if (data.includes("process.env")) {
+        riesgos.push("Uso de variables sensibles");
+    }
+
+    if (data.includes("axios.post")) {
+        riesgos.push("Envío de datos a endpoint externo");
+    }
+
+    if (data.includes(".env")) {
+        riesgos.push("Posible archivo sensible referenciado");
+    }
+
+    if (data.includes("token") || data.includes("api_key")) {
+        riesgos.push("Posible exposición de credenciales");
+    }
+
+    return riesgos;
+}
+
+// ==========================
+// 📝 ESCAPAR MARKDOWN TELEGRAM
+// ==========================
+function escaparMarkdown(text) {
+    return text.replace(/[_*[\]()~`>#+=|{}.!-]/g, "\\$&");
+}
+
+// ==========================
+// 📂 CARGA DE ARCHIVOS
+// ==========================
+function cargarArchivo(ruta, fallback) {
+    try {
+        if (fs.existsSync(ruta)) {
+            return fs.readFileSync(ruta, "utf8");
+        }
+    } catch {}
+    return fallback;
+}
+
+// ==========================
+// 🚀 EJECUCIÓN PRINCIPAL
+// ==========================
 async function ejecutarAuditoria() {
-    const apiKey = process.env.GEMINI_API_KEY;
-    const telegramToken = process.env.TELEGRAM_TOKEN;
-    const chatId = process.env.TELEGRAM_CHAT_ID;
+    console.log("🚀 IA DMR4 iniciando auditoría...");
 
-    // 1. Cargar datos de proyectos y memoria anterior
-    let dataContext = "Sin datos actuales de proyectos.";
-    let historialPasado = "No hay registros de auditorías anteriores.";
-    
-    if (fs.existsSync("./data.json")) {
-        dataContext = fs.readFileSync("./data.json", "utf8");
-    }
-    
-    if (fs.existsSync("./historial_dmr4.json")) {
-        historialPasado = fs.readFileSync("./historial_dmr4.json", "utf8");
-    }
+    const dataContext = cargarArchivo("./data.json", "");
+    const historialPasado = cargarArchivo("./historial_dmr4.json", "");
 
-    console.log("🚀 Iniciando Auditoría con Memoria...");
+    const riesgosLocales = detectarRiesgosLocales(dataContext);
 
     try {
-        // 2. Obtener el mejor modelo disponible automáticamente
+        // ==========================
+        // 🤖 OBTENER MODELO
+        // ==========================
         const listUrl = `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`;
         const listRes = await axios.get(listUrl);
+
         const modelos = listRes.data.models
             .filter(m => m.supportedGenerationMethods.includes("generateContent"))
             .map(m => m.name);
-        
-        const mejorModelo = modelos.find(m => m.includes("gemini-3")) || modelos[0];
 
-        // 3. Crear el mensaje para la IA incluyendo la memoria
-        const prompt = `Actúa como IA DMR4 de Dentalmovilr4. 
-        DATOS ACTUALES DE PROYECTOS: ${dataContext}
-        REPORTE DE LA AUDITORÍA ANTERIOR: ${historialPasado}
-        
-        TAREA: Analiza los riesgos actuales. Compara con el reporte anterior: 
-        - ¿Hay riesgos nuevos? 
-        - ¿Se solucionó algo de lo anterior? 
-        - Da un veredicto rápido. Sé técnico y breve.`;
+        const prioridad = ["gemini-3", "gemini-2.5", "gemini-2"];
+        const mejorModelo = modelos.find(m =>
+            prioridad.some(p => m.includes(p))
+        ) || modelos[0];
 
+        // ==========================
+        // 🧠 PROMPT INTELIGENTE
+        // ==========================
+        const prompt = `
+Actúa como IA DMR4 (ciberseguridad avanzada).
+
+DATOS ACTUALES:
+${sanitizar(dataContext)}
+
+HISTORIAL:
+${sanitizar(historialPasado)}
+
+RIESGOS LOCALES DETECTADOS:
+${JSON.stringify(riesgosLocales)}
+
+TAREA:
+- Detecta riesgos nuevos
+- Detecta riesgos resueltos
+- Da veredicto claro (ALTO, MEDIO, BAJO)
+- Respuesta técnica, breve
+`;
+
+        // ==========================
+        // 🤖 LLAMADA A IA
+        // ==========================
         const url = `https://generativelanguage.googleapis.com/v1beta/${mejorModelo}:generateContent?key=${apiKey}`;
+
         const response = await axios.post(url, {
             contents: [{ parts: [{ text: prompt }] }]
         });
 
-        const nuevoReporte = response.data.candidates[0].content.parts[0].text;
+        const nuevoReporte =
+            response?.data?.candidates?.[0]?.content?.parts?.[0]?.text ||
+            "⚠️ No se pudo generar reporte.";
 
-        // 4. Guardar el nuevo reporte en la memoria local (el YAML se encarga de subirlo a GitHub)
-        fs.writeFileSync("./historial_dmr4.json", nuevoReporte);
+        // ==========================
+        // 💾 GUARDAR MEMORIA
+        // ==========================
+        const memoria = {
+            fecha: new Date().toISOString(),
+            modelo: mejorModelo,
+            riesgosLocales,
+            reporte: nuevoReporte
+        };
 
-        // 5. Enviar reporte a Telegram
+        fs.writeFileSync("./historial_dmr4.json", JSON.stringify(memoria, null, 2));
+
+        // ==========================
+        // 📲 ENVIAR A TELEGRAM
+        // ==========================
+        const mensaje = escaparMarkdown(
+            `🛡️ DMR4 AUDITORÍA\n\nModelo: ${mejorModelo.split("/").pop()}\n\n${nuevoReporte}`
+        );
+
         await axios.post(`https://api.telegram.org/bot${telegramToken}/sendMessage`, {
             chat_id: chatId,
-            text: `🛡️ **DMR4: AUDITORÍA CON MEMORIA** 🛡️\n\n**Modelo:** ${mejorModelo.split('/').pop()}\n\n${nuevoReporte}`,
-            parse_mode: "Markdown"
+            text: mensaje,
+            parse_mode: "MarkdownV2"
         });
 
-        console.log("✅ Proceso completado con éxito.");
+        console.log("✅ Auditoría completada.");
 
     } catch (error) {
         const errorMsg = error.response?.data?.error?.message || error.message;
-        console.error("Error:", errorMsg);
-        
-        await axios.post(`https://api.telegram.org/bot${telegramToken}/sendMessage`, {
-            chat_id: chatId,
-            text: `⚠️ **DMR4 FALLO DE MEMORIA**\nError: ${errorMsg}`
-        }).catch(() => {});
-        
+
+        console.error("❌ Error:", errorMsg);
+
+        try {
+            await axios.post(`https://api.telegram.org/bot${telegramToken}/sendMessage`, {
+                chat_id: chatId,
+                text: `⚠️ DMR4 ERROR\n${errorMsg}`
+            });
+        } catch {}
+
         process.exit(1);
     }
 }
 
+// ==========================
+// ▶️ INICIO
+// ==========================
 ejecutarAuditoria();
-
