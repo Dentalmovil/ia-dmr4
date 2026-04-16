@@ -288,7 +288,7 @@ ${reporte}`
         try {
             await axios.post(`https://api.telegram.org/bot${telegramToken}/sendMessage`, {
                 chat_id: chatId,
-                text: "⚠️ DMR4 ERROR CRÍTICO"
+                text: "⚠️ DRM4 COIN"
             });
         } catch {}
     }
