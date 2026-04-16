@@ -7,8 +7,8 @@ const fs = require("fs");
 const apiKey = process.env.GEMINI_API_KEY;
 const telegramToken = process.env.TELEGRAM_TOKEN;
 const chatId = process.env.TELEGRAM_CHAT_ID;
-const githubToken = process.env.GITHUB_TOKEN;
-const githubUser = process.env.GITHUB_USER;
+const githubToken = process.env.MY_GITHUB_TOKEN;
+const githubUser = process.env.MY_GITHUB_USER;
 
 // ==========================
 // 🧼 SANITIZAR
