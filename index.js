@@ -29,22 +29,17 @@ function detectarRiesgosLocales(data) {
 
     if (data.includes("process.env")) riesgos.push("Uso de variables sensibles");
     if (data.includes("axios.post")) riesgos.push("Salida de datos externa");
-    if (data.includes(".env")) riesgos.push("Archivo sensible referenciado");
+    if (data.includes(".env")) riesgos.push("Archivo sensible");
     if (data.includes("token") || data.includes("api_key")) riesgos.push("Credencial posible");
 
     return riesgos;
 }
 
 // ==========================
-// 📝 TELEGRAM SAFE
-// ==========================
 function escaparMarkdown(text) {
     return text.replace(/[_*[\]()~`>#+=|{}.!-]/g, "\\$&");
 }
 
-// ==========================
-// 📂 FILE LOAD
-// ==========================
 function cargarArchivo(ruta, fallback) {
     try {
         if (fs.existsSync(ruta)) {
@@ -54,9 +49,6 @@ function cargarArchivo(ruta, fallback) {
     return fallback;
 }
 
-// ==========================
-// ⏳ SLEEP
-// ==========================
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 // ==========================
@@ -73,24 +65,19 @@ function guardarPendiente(prompt) {
     }
 
     data.push({ fecha: new Date().toISOString(), prompt });
-
     fs.writeFileSync(file, JSON.stringify(data, null, 2));
 }
 
 // ==========================
-// 🌐 GITHUB REPOS
+// 🌐 GITHUB
 // ==========================
 async function obtenerReposGithub() {
     const res = await axios.get("https://api.github.com/user/repos", {
         headers: { Authorization: `Bearer ${githubToken}` }
     });
-
     return res.data.map(r => r.name);
 }
 
-// ==========================
-// 📂 ARCHIVOS REPO
-// ==========================
 async function obtenerArchivosRepo(repo) {
     try {
         const res = await axios.get(
@@ -104,21 +91,85 @@ async function obtenerArchivosRepo(repo) {
 }
 
 // ==========================
-// 🔍 ESCANEO REPO
+// 🔥 ESCANEO PROFUNDO REAL
 // ==========================
 async function escanearRepo(repo) {
     const archivos = await obtenerArchivosRepo(repo);
     const riesgos = [];
 
-    for (let file of archivos) {
-        const name = file.name.toLowerCase();
+    let contador = 0;
 
-        if (name.includes(".env")) riesgos.push(".env expuesto");
-        if (name.includes("config")) riesgos.push("config sensible");
-        if (name.includes("key") || name.includes("token")) riesgos.push("posible credencial");
+    for (let file of archivos) {
+        if (file.type !== "file") continue;
+        if (contador > 10) break;
+        contador++;
+
+        try {
+            const res = await axios.get(file.download_url);
+            const contenido = res.data;
+
+            // 🔐 SECRETOS
+            if (/api[_-]?key\s*=\s*['"][A-Za-z0-9_\-]{16,}/i.test(contenido))
+                riesgos.push("API KEY expuesta");
+
+            if (/token\s*=\s*['"][A-Za-z0-9_\-]{16,}/i.test(contenido))
+                riesgos.push("TOKEN expuesto");
+
+            if (/-----BEGIN PRIVATE KEY-----/.test(contenido))
+                riesgos.push("CLAVE PRIVADA");
+
+            // ⚠️ RIESGO CÓDIGO
+            if (contenido.includes("eval(")) riesgos.push("Uso de eval()");
+            if (contenido.includes("exec(")) riesgos.push("Uso de exec()");
+            if (contenido.includes("child_process")) riesgos.push("Ejecución sistema");
+
+            // 🌐 EXFILTRACIÓN
+            if (contenido.includes("axios.post") && contenido.includes("http"))
+                riesgos.push("Posible fuga de datos");
+
+        } catch {}
     }
 
-    return { repo, riesgos };
+    return {
+        repo,
+        riesgos: [...new Set(riesgos)]
+    };
+}
+
+// ==========================
+// 🚨 DETECTAR CRÍTICOS
+// ==========================
+function detectarCriticos(resultados) {
+    return resultados.filter(r =>
+        r.riesgos.some(rg =>
+            rg.includes("API KEY") ||
+            rg.includes("TOKEN") ||
+            rg.includes("CLAVE PRIVADA")
+        )
+    );
+}
+
+// ==========================
+// 📲 ALERTA CRÍTICA
+// ==========================
+async function enviarAlertaCritica(reposCriticos) {
+    if (!reposCriticos.length) return;
+
+    const msg = escaparMarkdown(
+`🚨 DMR4 ALERTA CRÍTICA 🚨
+
+${reposCriticos.map(r => `- ${r.repo}: ${r.riesgos.join(", ")}`).join("\n")}
+
+Acción:
+- Rotar claves
+- Revisar accesos`
+    );
+
+    await axios.post(`https://api.telegram.org/bot${telegramToken}/sendMessage`, {
+        chat_id: chatId,
+        text: msg,
+        parse_mode: "MarkdownV2"
+    });
 }
 
 // ==========================
@@ -126,12 +177,8 @@ async function escanearRepo(repo) {
 // ==========================
 async function consultarIA(modelos, prompt) {
     for (let intento = 1; intento <= 3; intento++) {
-
         for (let modelo of modelos) {
-
             try {
-                console.log(`🧠 ${modelo} intento ${intento}`);
-
                 const url = `https://generativelanguage.googleapis.com/v1beta/${modelo}:generateContent?key=${apiKey}`;
 
                 const res = await axios.post(url, {
@@ -139,20 +186,16 @@ async function consultarIA(modelos, prompt) {
                 });
 
                 const txt = res?.data?.candidates?.[0]?.content?.parts?.[0]?.text;
-
                 if (txt) return { txt, modelo };
 
             } catch (e) {
                 const msg = e.response?.data?.error?.message || "";
-
-                if (msg.includes("high demand") || msg.includes("overloaded")) continue;
+                if (msg.includes("high demand")) continue;
                 if (msg.includes("API key")) throw e;
             }
         }
-
         await sleep(4000 * intento);
     }
-
     return null;
 }
 
@@ -160,7 +203,7 @@ async function consultarIA(modelos, prompt) {
 // 🚀 MAIN
 // ==========================
 async function ejecutarAuditoria() {
-    console.log("🚀 DMR4 activo");
+    console.log("🚀 DMR4 SOC ACTIVO");
 
     const dataContext = cargarArchivo("./data.json", "");
     const historial = cargarArchivo("./historial_dmr4.json", "");
@@ -178,7 +221,7 @@ async function ejecutarAuditoria() {
             ["gemini-3", "gemini-2.5", "gemini-2"].some(p => m.includes(p))
         );
 
-        // GITHUB SCAN
+        // 🔍 ESCANEO GITHUB
         const repos = await obtenerReposGithub();
         let resultados = [];
 
@@ -186,54 +229,43 @@ async function ejecutarAuditoria() {
             resultados.push(await escanearRepo(r));
         }
 
+        // 🚨 ALERTAS CRÍTICAS
+        const criticos = detectarCriticos(resultados);
+        await enviarAlertaCritica(criticos);
+
         const resumen = resultados
             .map(r => `${r.repo}: ${r.riesgos.join(", ") || "OK"}`)
             .join("\n");
 
-        // PROMPT
+        // 🧠 PROMPT
         const prompt = `
 IA DMR4 - SOC
 
 REPOS:
 ${resumen}
 
-DATOS:
-${sanitizar(dataContext)}
-
-HISTORIAL:
-${sanitizar(historial)}
-
 RIESGOS LOCALES:
 ${JSON.stringify(riesgosLocales)}
 
-Evalúa:
-- repos críticos
-- riesgos nuevos
-- veredicto global
+Evalúa nivel global y riesgos críticos
 `;
 
         // IA
         const resIA = await consultarIA(modelosOK, prompt);
 
-        let reporte = "";
-        let modelo = "none";
+        let reporte = resIA?.txt || "⚠️ IA no disponible";
+        let modelo = resIA?.modelo || "none";
 
-        if (resIA) {
-            reporte = resIA.txt;
-            modelo = resIA.modelo;
-        } else {
-            reporte = "⚠️ IA no disponible";
-            guardarPendiente(prompt);
-        }
+        if (!resIA) guardarPendiente(prompt);
 
-        // MEMORIA
+        // 💾 MEMORIA
         fs.writeFileSync("./historial_dmr4.json", JSON.stringify({
             fecha: new Date().toISOString(),
             modelo,
             reporte
         }, null, 2));
 
-        // TELEGRAM
+        // 📲 TELEGRAM NORMAL
         const msg = escaparMarkdown(
 `🛡️ DMR4 SOC
 
@@ -248,7 +280,7 @@ ${reporte}`
             parse_mode: "MarkdownV2"
         });
 
-        console.log("✅ OK");
+        console.log("✅ COMPLETO");
 
     } catch (err) {
         console.error("❌", err.message);
@@ -256,7 +288,7 @@ ${reporte}`
         try {
             await axios.post(`https://api.telegram.org/bot${telegramToken}/sendMessage`, {
                 chat_id: chatId,
-                text: "⚠️ DMR4 crítico"
+                text: "⚠️ DMR4 ERROR CRÍTICO"
             });
         } catch {}
     }
